@@ -2,6 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/Judgy.Core/Judgy.Core.csproj" />
     <Project Path="src/Judgy.Providers.Http/Judgy.Providers.Http.csproj" />
+    <Project Path="src/Judgy.Providers.OpenAI/Judgy.Providers.OpenAI.csproj" />
     <Project Path="src/Judgy.Xunit/Judgy.Xunit.csproj" />
   </Folder>
   <Folder Name="/tests/">
