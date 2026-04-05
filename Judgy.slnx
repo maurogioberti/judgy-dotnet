@@ -8,6 +8,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/Judgy.Core.Tests/Judgy.Core.Tests.csproj" />
     <Project Path="tests/Judgy.Providers.Http.Tests/Judgy.Providers.Http.Tests.csproj" />
+    <Project Path="tests/Judgy.Providers.OpenAI.Tests/Judgy.Providers.OpenAI.Tests.csproj" />
     <Project Path="tests/Judgy.Xunit.Tests/Judgy.Xunit.Tests.csproj" />
   </Folder>
 </Solution>
