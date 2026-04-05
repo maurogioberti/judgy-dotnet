@@ -17,6 +17,7 @@
     <Project Path="tests/Judgy.Providers.AzureOpenAI.Tests/Judgy.Providers.AzureOpenAI.Tests.csproj" />
     <Project Path="tests/Judgy.Core.Tests/Judgy.Core.Tests.csproj" />
     <Project Path="tests/Judgy.Providers.DeepSeek.Tests/Judgy.Providers.DeepSeek.Tests.csproj" />
+    <Project Path="tests/Judgy.Providers.Google.Tests/Judgy.Providers.Google.Tests.csproj" />
     <Project Path="tests/Judgy.Providers.Http.Tests/Judgy.Providers.Http.Tests.csproj" />
     <Project Path="tests/Judgy.Providers.Mistral.Tests/Judgy.Providers.Mistral.Tests.csproj" />
     <Project Path="tests/Judgy.Providers.Moonshot.Tests/Judgy.Providers.Moonshot.Tests.csproj" />
