@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageId>Judgy.Providers.Http</PackageId>
+    <Description>Generic HTTP LLM provider for Judgy.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Judgy.Providers.Http.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Judgy.Core\Judgy.Core.csproj" />
+  </ItemGroup>
+
+</Project>
