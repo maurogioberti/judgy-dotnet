@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/Judgy.Providers.Anthropic/Judgy.Providers.Anthropic.csproj" />
     <Project Path="src/Judgy.Core/Judgy.Core.csproj" />
     <Project Path="src/Judgy.Providers.AzureOpenAI/Judgy.Providers.AzureOpenAI.csproj" />
     <Project Path="src/Judgy.Providers.DeepSeek/Judgy.Providers.DeepSeek.csproj" />
