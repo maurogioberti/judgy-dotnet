@@ -4,10 +4,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  pack:
+  release:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    environment:
+      name: nuget-org
 
     steps:
       - name: Checkout
@@ -26,6 +28,27 @@ jobs:
 
       - name: Pack
         run: dotnet pack Judgy.slnx -c Release --no-build -p:ContinuousIntegrationBuild=true -o artifacts/packages
+
+      - name: Ensure publish runs from master
+        run: |
+          if [ "${GITHUB_REF}" != "refs/heads/master" ]; then
+            echo "NuGet publishing is only allowed from master. Current ref: ${GITHUB_REF}"
+            exit 1
+          fi
+
+      - name: Publish packages to NuGet.org
+        env:
+          NUGET_ORG_API_KEY: ${{ secrets.NUGET_ORG_API_KEY }}
+        run: |
+          dotnet nuget push "artifacts/packages/*.nupkg" \
+            --source "https://api.nuget.org/v3/index.json" \
+            --api-key "$NUGET_ORG_API_KEY" \
+            --skip-duplicate
+
+          dotnet nuget push "artifacts/packages/*.snupkg" \
+            --source "https://api.nuget.org/v3/index.json" \
+            --api-key "$NUGET_ORG_API_KEY" \
+            --skip-duplicate
 
       - name: Upload packages
         uses: actions/upload-artifact@v6
