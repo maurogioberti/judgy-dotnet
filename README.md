@@ -2,37 +2,82 @@
 
 Judgy is a .NET library for semantic testing of AI and LLM output.
 
-Instead of relying only on exact string matching, Judgy evaluates whether generated output satisfies an expectation, produces structured evaluation evidence, and lets tests assert against that evidence using familiar .NET patterns.
+Instead of asserting on exact strings, Judgy lets you check whether generated output satisfies an expectation, then fail tests with useful evaluation context.
 
-## Why It Exists
+## Why Use Judgy
 
-Traditional assertions are often too brittle for AI-generated text. Judgy exists to make semantic evaluation practical in automated .NET test suites while keeping the core evaluation and assertion logic portable and provider-agnostic.
+- Test meaning instead of exact phrasing
+- Keep LLM assertions readable in xUnit
+- Plug in different model providers without changing test structure
+- Reuse the same core evaluation and assertion primitives across projects
 
-## Current Status
+## Quick Start
 
-This repository is being reconstructed into a clean public open-source .NET implementation. Core libraries, providers, and tests are being migrated in small, reviewable commits.
+Install the xUnit package and a provider package:
 
-Samples are intentionally postponed and will be added later.
-
-## Planned Structure
-
-```text
-src/
-  Judgy.Core/
-  Judgy.Xunit/
-  Judgy.Providers.*
-
-tests/
-  Judgy.Core.Tests/
-  Judgy.Xunit.Tests/
-  Judgy.Providers.*.Tests/
+```bash
+dotnet add package Judgy.Xunit
+dotnet add package Judgy.Providers.OpenAI
 ```
 
-## Design Shape
+Create a provider, build an evaluator, and assert semantically:
+
+```csharp
+using Judgy.Evaluation;
+using Judgy.Providers.OpenAI;
+using Xunit;
+
+var provider = new OpenAiProvider(new OpenAiProviderOptions
+{
+    ApiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY")!,
+    Model = "gpt-4o"
+});
+
+var evaluator = new SemanticEvaluator(provider);
+
+await Assert.JudgyAsync(
+    actualOutput,
+    "The answer should mention refund deadlines",
+    evaluator);
+```
+
+You can also set a custom threshold:
+
+```csharp
+await Assert.JudgyAsync(
+    actualOutput,
+    "The answer should mention refund deadlines",
+    evaluator,
+    minimumScore: 0.80);
+```
+
+## Packages
+
+| Package | Purpose |
+| --- | --- |
+| `Judgy.Core` | Core evaluation and assertion primitives |
+| `Judgy.Xunit` | xUnit assertion API |
+| `Judgy.Providers.OpenAI` | OpenAI provider |
+| `Judgy.Providers.Ollama` | Ollama provider |
+| `Judgy.Providers.Http` | Generic HTTP provider |
+| `Judgy.Providers.Anthropic` | Anthropic provider |
+| `Judgy.Providers.Google` | Google Gemini provider |
+| `Judgy.Providers.AzureOpenAI` | Azure OpenAI provider |
+| `Judgy.Providers.Mistral` | Mistral provider |
+| `Judgy.Providers.Moonshot` | Moonshot provider |
+| `Judgy.Providers.DeepSeek` | DeepSeek provider |
+
+## How It Works
 
 ```text
 LLM Provider -> Evaluator -> Evidence -> Assertion Policy -> xUnit Assert
 ```
+
+Judgy keeps provider calls, semantic evaluation, and assertion policy separate so tests stay simple while the evaluation logic stays flexible.
+
+## Status
+
+Judgy is usable today and still evolving. Expect improvements and API refinements before a stable `1.0` release.
 
 ## License
 
