@@ -11,6 +11,7 @@
     <Project Path="src/Judgy.Xunit/Judgy.Xunit.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Judgy.Providers.AzureOpenAI.Tests/Judgy.Providers.AzureOpenAI.Tests.csproj" />
     <Project Path="tests/Judgy.Core.Tests/Judgy.Core.Tests.csproj" />
     <Project Path="tests/Judgy.Providers.DeepSeek.Tests/Judgy.Providers.DeepSeek.Tests.csproj" />
     <Project Path="tests/Judgy.Providers.Http.Tests/Judgy.Providers.Http.Tests.csproj" />

@@ -1,0 +1,275 @@
+using System.Net;
+using System.Text.Json;
+using FluentAssertions;
+using Judgy.Providers.AzureOpenAI.Tests.Fakes;
+using Xunit;
+
+namespace Judgy.Providers.AzureOpenAI.Tests;
+
+public class AzureOpenAiProviderTests
+{
+    private const string ValidApiKey = "azure-test-key-12345";
+    private const string Endpoint = "https://example-resource.openai.azure.com/";
+    private const string DeploymentName = "judgy-test-deployment";
+    private const string ApiVersion = "2024-10-21";
+    private const string TestPrompt = "What is 2+2?";
+    private const string TestSystemPrompt = "You are a math tutor.";
+    private const string TestResponseText = "4";
+
+    private static string MakeResponseJson(
+        string content = TestResponseText,
+        int promptTokens = 10,
+        int completionTokens = 5) =>
+        $$"""
+        {
+            "choices": [
+                {
+                    "message": {
+                        "content": "{{content}}"
+                    }
+                }
+            ],
+            "usage": {
+                "prompt_tokens": {{promptTokens}},
+                "completion_tokens": {{completionTokens}}
+            }
+        }
+        """;
+
+    private static AzureOpenAiProviderOptions MakeOptions(FakeHttpMessageHandler handler) =>
+        new()
+        {
+            Endpoint = Endpoint,
+            ApiKey = ValidApiKey,
+            DeploymentName = DeploymentName,
+            HttpMessageHandler = handler
+        };
+
+    [Fact]
+    public async Task CompleteAsync_SendsCorrectRequest()
+    {
+        var handler = new FakeHttpMessageHandler(MakeResponseJson());
+        using var provider = new AzureOpenAiProvider(MakeOptions(handler));
+        var request = new Judgy.Providers.LlmRequest(TestPrompt);
+
+        await provider.CompleteAsync(request, TestContext.Current.CancellationToken);
+
+        handler.LastRequest.Should().NotBeNull();
+        handler.LastRequest!.Method.Should().Be(HttpMethod.Post);
+        handler.LastRequest.RequestUri!.PathAndQuery.Should().Be($"/openai/deployments/{DeploymentName}/chat/completions?api-version={ApiVersion}");
+        handler.LastRequest.Headers.TryGetValues("api-key", out var values).Should().BeTrue();
+        values!.Single().Should().Be(ValidApiKey);
+    }
+
+    [Fact]
+    public async Task CompleteAsync_SendsCorrectRequestBody()
+    {
+        var handler = new FakeHttpMessageHandler(MakeResponseJson());
+        using var provider = new AzureOpenAiProvider(MakeOptions(handler));
+        var request = new Judgy.Providers.LlmRequest(TestPrompt);
+
+        await provider.CompleteAsync(request, TestContext.Current.CancellationToken);
+
+        handler.LastRequestBody.Should().NotBeNullOrEmpty();
+        using var doc = JsonDocument.Parse(handler.LastRequestBody!);
+        var root = doc.RootElement;
+        root.TryGetProperty("model", out _).Should().BeFalse();
+        root.GetProperty("temperature").GetDouble().Should().Be(0.0);
+        root.GetProperty("max_tokens").GetInt32().Should().Be(1024);
+
+        var messages = root.GetProperty("messages");
+        messages.GetArrayLength().Should().Be(1);
+        messages[0].GetProperty("role").GetString().Should().Be("user");
+        messages[0].GetProperty("content").GetString().Should().Be(TestPrompt);
+    }
+
+    [Fact]
+    public async Task CompleteAsync_SystemPromptIncludedWhenProvided()
+    {
+        var handler = new FakeHttpMessageHandler(MakeResponseJson());
+        using var provider = new AzureOpenAiProvider(MakeOptions(handler));
+        var request = new Judgy.Providers.LlmRequest(TestPrompt, systemPrompt: TestSystemPrompt);
+
+        await provider.CompleteAsync(request, TestContext.Current.CancellationToken);
+
+        using var doc = JsonDocument.Parse(handler.LastRequestBody!);
+        var messages = doc.RootElement.GetProperty("messages");
+        messages.GetArrayLength().Should().Be(2);
+        messages[0].GetProperty("role").GetString().Should().Be("system");
+        messages[0].GetProperty("content").GetString().Should().Be(TestSystemPrompt);
+        messages[1].GetProperty("role").GetString().Should().Be("user");
+        messages[1].GetProperty("content").GetString().Should().Be(TestPrompt);
+    }
+
+    [Fact]
+    public async Task CompleteAsync_ParsesResponseCorrectly()
+    {
+        var handler = new FakeHttpMessageHandler(MakeResponseJson("Hello world", 15, 8));
+        using var provider = new AzureOpenAiProvider(MakeOptions(handler));
+        var request = new Judgy.Providers.LlmRequest(TestPrompt);
+
+        var response = await provider.CompleteAsync(request, TestContext.Current.CancellationToken);
+
+        response.Text.Should().Be("Hello world");
+        response.ProviderName.Should().Be("AzureOpenAI");
+        response.PromptTokens.Should().Be(15);
+        response.CompletionTokens.Should().Be(8);
+    }
+
+    [Fact]
+    public async Task CompleteAsync_UsesRequestTemperatureOverOptionsDefault()
+    {
+        var handler = new FakeHttpMessageHandler(MakeResponseJson());
+        using var provider = new AzureOpenAiProvider(MakeOptions(handler));
+        var request = new Judgy.Providers.LlmRequest(TestPrompt, temperature: 0.7);
+
+        await provider.CompleteAsync(request, TestContext.Current.CancellationToken);
+
+        using var doc = JsonDocument.Parse(handler.LastRequestBody!);
+        doc.RootElement.GetProperty("temperature").GetDouble().Should().Be(0.7);
+    }
+
+    [Fact]
+    public async Task CompleteAsync_UsesRequestMaxTokensOverOptionsDefault()
+    {
+        var handler = new FakeHttpMessageHandler(MakeResponseJson());
+        using var provider = new AzureOpenAiProvider(MakeOptions(handler));
+        var request = new Judgy.Providers.LlmRequest(TestPrompt, maxTokens: 512);
+
+        await provider.CompleteAsync(request, TestContext.Current.CancellationToken);
+
+        using var doc = JsonDocument.Parse(handler.LastRequestBody!);
+        doc.RootElement.GetProperty("max_tokens").GetInt32().Should().Be(512);
+    }
+
+    [Fact]
+    public async Task CompleteAsync_NullRequest_ThrowsArgumentNullException()
+    {
+        var handler = new FakeHttpMessageHandler(MakeResponseJson());
+        using var provider = new AzureOpenAiProvider(MakeOptions(handler));
+
+        var act = () => provider.CompleteAsync(null!, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<ArgumentNullException>()
+            .Where(ex => ex.ParamName == "request");
+    }
+
+    [Fact]
+    public async Task CompleteAsync_HttpError_ThrowsHttpRequestException()
+    {
+        var handler = new FakeHttpMessageHandler("{}", HttpStatusCode.InternalServerError);
+        using var provider = new AzureOpenAiProvider(MakeOptions(handler));
+        var request = new Judgy.Providers.LlmRequest(TestPrompt);
+
+        var act = () => provider.CompleteAsync(request, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<HttpRequestException>();
+    }
+
+    [Fact]
+    public async Task CompleteAsync_EmptyChoices_ThrowsInvalidOperationException()
+    {
+        var handler = new FakeHttpMessageHandler("""{"choices": [], "usage": null}""");
+        using var provider = new AzureOpenAiProvider(MakeOptions(handler));
+        var request = new Judgy.Providers.LlmRequest(TestPrompt);
+
+        var act = () => provider.CompleteAsync(request, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<InvalidOperationException>();
+    }
+
+    [Fact]
+    public void Constructor_NullOptions_ThrowsArgumentNullException()
+    {
+        var act = () => new AzureOpenAiProvider(null!);
+
+        act.Should().Throw<ArgumentNullException>()
+            .Which.ParamName.Should().Be("options");
+    }
+
+    [Fact]
+    public void Constructor_EmptyEndpoint_ThrowsArgumentException()
+    {
+        var act = () => new AzureOpenAiProvider(new AzureOpenAiProviderOptions
+        {
+            Endpoint = "",
+            ApiKey = ValidApiKey,
+            DeploymentName = DeploymentName
+        });
+
+        act.Should().Throw<ArgumentException>()
+            .Which.ParamName.Should().Be("options");
+    }
+
+    [Fact]
+    public void Constructor_EmptyApiKey_ThrowsArgumentException()
+    {
+        var act = () => new AzureOpenAiProvider(new AzureOpenAiProviderOptions
+        {
+            Endpoint = Endpoint,
+            ApiKey = "",
+            DeploymentName = DeploymentName
+        });
+
+        act.Should().Throw<ArgumentException>()
+            .Which.ParamName.Should().Be("options");
+    }
+
+    [Fact]
+    public void Constructor_EmptyDeploymentName_ThrowsArgumentException()
+    {
+        var act = () => new AzureOpenAiProvider(new AzureOpenAiProviderOptions
+        {
+            Endpoint = Endpoint,
+            ApiKey = ValidApiKey,
+            DeploymentName = ""
+        });
+
+        act.Should().Throw<ArgumentException>()
+            .Which.ParamName.Should().Be("options");
+    }
+
+    [Fact]
+    public void Options_DefaultValues()
+    {
+        var options = new AzureOpenAiProviderOptions();
+
+        options.Endpoint.Should().BeEmpty();
+        options.ApiKey.Should().BeEmpty();
+        options.DeploymentName.Should().BeEmpty();
+        options.ApiVersion.Should().Be("2024-10-21");
+        options.Temperature.Should().Be(0.0f);
+        options.MaxTokens.Should().Be(1024);
+        options.Timeout.Should().Be(TimeSpan.FromSeconds(60));
+        options.HttpMessageHandler.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task CompleteAsync_UsesCustomApiVersion()
+    {
+        var handler = new FakeHttpMessageHandler(MakeResponseJson());
+        var options = MakeOptions(handler);
+        options.ApiVersion = "2025-01-01-preview";
+        using var provider = new AzureOpenAiProvider(options);
+        var request = new Judgy.Providers.LlmRequest(TestPrompt);
+
+        await provider.CompleteAsync(request, TestContext.Current.CancellationToken);
+
+        handler.LastRequest!.RequestUri!.PathAndQuery.Should().Be($"/openai/deployments/{DeploymentName}/chat/completions?api-version=2025-01-01-preview");
+    }
+
+    [Fact]
+    public async Task CompleteAsync_ForwardsCancellationToken()
+    {
+        using var cts = new CancellationTokenSource();
+        await cts.CancelAsync();
+
+        var handler = new FakeHttpMessageHandler(MakeResponseJson());
+        using var provider = new AzureOpenAiProvider(MakeOptions(handler));
+        var request = new Judgy.Providers.LlmRequest(TestPrompt);
+
+        var act = () => provider.CompleteAsync(request, cts.Token);
+
+        await act.Should().ThrowAsync<OperationCanceledException>();
+    }
+}
