@@ -67,6 +67,15 @@ await Assert.JudgyAsync(
 | `Judgy.Providers.Moonshot` | Moonshot provider |
 | `Judgy.Providers.DeepSeek` | DeepSeek provider |
 
+## Samples
+
+The repository includes runnable sample test projects under [`samples/`](samples/README.md):
+
+- [`Judgy.Samples.SemanticEvaluation`](samples/Judgy.Samples.SemanticEvaluation/README.md) calls a source system through `HttpProvider`, then evaluates the answer with `SemanticEvaluator` and `SemanticAssertionPolicy`.
+- [`Judgy.Samples.XunitAssertions`](samples/Judgy.Samples.XunitAssertions/README.md) shows the xUnit assertion helpers with `Assert.JudgyAsync(...)`, `Assert.JudgyScore(...)`, and `Assert.JudgyDuration(...)`.
+
+Both samples use `OllamaProvider` by default so they can run locally without a hosted API key. You can swap in any compatible Judgy provider as the judge, and the semantic evaluation sample can point `HttpProvider` at any HTTP endpoint that returns text.
+
 ## How It Works
 
 ```text
