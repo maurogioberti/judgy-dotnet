@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageId>Judgy.Providers.AzureOpenAI</PackageId>
+    <Description>Azure OpenAI provider for Judgy.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Judgy.Core\Judgy.Core.csproj" />
+  </ItemGroup>
+</Project>
