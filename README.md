@@ -1,26 +1,61 @@
 # Judgy
 
-Judgy is a .NET library for semantic testing of AI and LLM output.
+Judgy is a family of .NET libraries for semantic testing of AI and LLM output.
 
-Instead of asserting on exact strings, Judgy lets you check whether generated output satisfies an expectation, then fail tests with useful evaluation context.
+Instead of asserting on exact strings, Judgy lets you evaluate whether generated output satisfies an expectation and then fail with useful semantic evidence.
 
-## Why Use Judgy
+Current packages target `.NET 10`.
 
-- Test meaning instead of exact phrasing
-- Keep LLM assertions readable in xUnit
-- Plug in different model providers without changing test structure
-- Reuse the same core evaluation and assertion primitives across projects
+## Providers Are Optional
 
-## Quick Start
+`Judgy.Core` defines the provider abstraction used by `SemanticEvaluator`:
 
-Install the xUnit package and a provider package:
+- `Judgy.Providers.ILlmProvider`
+- `Judgy.Providers.LlmRequest`
+- `Judgy.Providers.LlmResponse`
+
+That means the `Judgy.Providers.*` packages are optional implementations. You can use the built-in providers for HTTP and common LLM runtimes, or you can implement `ILlmProvider` yourself if you want to connect Judgy to your own gateway, SDK, wrapper, or in-house model service.
+
+## Install the packages you need
+
+Install the core package, add `Judgy.Xunit` if you want xUnit helpers, and then choose the provider package that matches your model/runtime:
 
 ```bash
+dotnet add package Judgy.Core
 dotnet add package Judgy.Xunit
+
+dotnet add package Judgy.Providers.Http
+dotnet add package Judgy.Providers.Ollama
 dotnet add package Judgy.Providers.OpenAI
+dotnet add package Judgy.Providers.Anthropic
+dotnet add package Judgy.Providers.Google
+dotnet add package Judgy.Providers.AzureOpenAI
+dotnet add package Judgy.Providers.Mistral
+dotnet add package Judgy.Providers.Moonshot
+dotnet add package Judgy.Providers.DeepSeek
 ```
 
-Create a provider, build an evaluator, and assert semantically:
+If you already have your own LLM integration, you can skip the optional provider packages and implement `ILlmProvider` directly.
+
+## Packages
+
+| Package | Purpose |
+| --- | --- |
+| `Judgy.Core` | Core evaluation models, provider abstractions, and assertion policy primitives |
+| `Judgy.Xunit` | xUnit assertion helpers such as `Assert.JudgyAsync(...)` |
+| `Judgy.Providers.Http` | Optional generic HTTP provider for calling text-producing endpoints |
+| `Judgy.Providers.Ollama` | Optional Ollama provider |
+| `Judgy.Providers.OpenAI` | Optional OpenAI provider |
+| `Judgy.Providers.Anthropic` | Optional Anthropic provider |
+| `Judgy.Providers.Google` | Optional Google Gemini provider |
+| `Judgy.Providers.AzureOpenAI` | Optional Azure OpenAI provider |
+| `Judgy.Providers.Mistral` | Optional Mistral provider |
+| `Judgy.Providers.Moonshot` | Optional Moonshot provider |
+| `Judgy.Providers.DeepSeek` | Optional DeepSeek provider |
+
+## Quick Start With xUnit
+
+The example below uses `Judgy.Providers.OpenAI`, but the same evaluator flow works with any supported provider package. Swap in `HttpProvider`, `OllamaProvider`, `AnthropicProvider`, `GoogleProvider`, `AzureOpenAiProvider`, `MistralProvider`, `MoonshotProvider`, or `DeepSeekProvider` as needed.
 
 ```csharp
 using Judgy.Evaluation;
@@ -38,55 +73,78 @@ var evaluator = new SemanticEvaluator(provider);
 await Assert.JudgyAsync(
     actualOutput,
     "The answer should mention refund deadlines",
-    evaluator);
-```
-
-You can also set a custom threshold:
-
-```csharp
-await Assert.JudgyAsync(
-    actualOutput,
-    "The answer should mention refund deadlines",
     evaluator,
     minimumScore: 0.80);
 ```
 
-## Packages
+## Quick Start Without xUnit
 
-| Package | Purpose |
-| --- | --- |
-| `Judgy.Core` | Core evaluation and assertion primitives |
-| `Judgy.Xunit` | xUnit assertion API |
-| `Judgy.Providers.OpenAI` | OpenAI provider |
-| `Judgy.Providers.Ollama` | Ollama provider |
-| `Judgy.Providers.Http` | Generic HTTP provider |
-| `Judgy.Providers.Anthropic` | Anthropic provider |
-| `Judgy.Providers.Google` | Google Gemini provider |
-| `Judgy.Providers.AzureOpenAI` | Azure OpenAI provider |
-| `Judgy.Providers.Mistral` | Mistral provider |
-| `Judgy.Providers.Moonshot` | Moonshot provider |
-| `Judgy.Providers.DeepSeek` | DeepSeek provider |
+The same pattern also works with any provider package under `Judgy.Providers.*`.
 
-## Samples
+```csharp
+using Judgy.Assertions;
+using Judgy.Evaluation;
+using Judgy.Providers.OpenAI;
 
-The repository includes runnable sample test projects under [`samples/`](samples/README.md):
+var provider = new OpenAiProvider(new OpenAiProviderOptions
+{
+    ApiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY")!,
+    Model = "gpt-4o"
+});
 
-- [`Judgy.Samples.SemanticEvaluation`](samples/Judgy.Samples.SemanticEvaluation/README.md) calls a source system through `HttpProvider`, then evaluates the answer with `SemanticEvaluator` and `SemanticAssertionPolicy`.
-- [`Judgy.Samples.XunitAssertions`](samples/Judgy.Samples.XunitAssertions/README.md) shows the xUnit assertion helpers with `Assert.JudgyAsync(...)`, `Assert.JudgyScore(...)`, and `Assert.JudgyDuration(...)`.
+var evaluator = new SemanticEvaluator(provider);
+var result = await evaluator.EvaluateAsync(
+    actualOutput,
+    "The answer should mention refund deadlines");
 
-Both samples use `OllamaProvider` by default so they can run locally without a hosted API key. You can swap in any compatible Judgy provider as the judge, and the semantic evaluation sample can point `HttpProvider` at any HTTP endpoint that returns text.
+var decision = SemanticAssertionPolicy.Evaluate(result, new SemanticAssertionOptions(0.80));
+```
+
+## Custom Provider Example
+
+If you do not want to use one of the optional `Judgy.Providers.*` packages, implement `ILlmProvider` yourself:
+
+```csharp
+using Judgy.Providers;
+
+public sealed class MyProvider : ILlmProvider
+{
+    public async Task<LlmResponse> CompleteAsync(
+        LlmRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        // Call your own SDK, gateway, or service here and return the raw
+        // evaluator response text that Judgy will parse.
+        var text = await Task.FromResult(
+            "{\"confidence\":0.95,\"reasoning\":\"Looks good.\"}");
+
+        return new LlmResponse(text, "MyProvider");
+    }
+}
+```
 
 ## How It Works
 
 ```text
-LLM Provider -> Evaluator -> Evidence -> Assertion Policy -> xUnit Assert
+LLM Provider -> SemanticEvaluator -> Evidence -> Assertion Policy -> Test Assertion
 ```
 
-Judgy keeps provider calls, semantic evaluation, and assertion policy separate so tests stay simple while the evaluation logic stays flexible.
+Judgy keeps provider calls, semantic evaluation, and assertion policy separate so tests stay readable while evaluation logic stays reusable.
+
+## Samples
+
+The repository includes runnable sample projects under:
+
+- `samples/Judgy.Samples.SemanticEvaluation`
+- `samples/Judgy.Samples.XunitAssertions`
+
+Browse the repository for sample setup and usage details:
+
+- `https://github.com/maurogioberti/judgy-dotnet`
 
 ## Status
 
-Judgy is usable today and still evolving. Expect improvements and API refinements before a stable `1.0` release.
+Judgy is usable today and still evolving. Expect API and package refinements before a stable `1.0` release.
 
 ## License
 
