@@ -7,6 +7,7 @@ internal sealed record AnthropicMessageRequest(
     [property: JsonPropertyName("max_tokens")] int MaxTokens,
     [property: JsonPropertyName("messages")] AnthropicMessage[] Messages,
     [property: JsonPropertyName("temperature")] double Temperature,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     [property: JsonPropertyName("system")] string? System);
 
 internal sealed record AnthropicMessage(
