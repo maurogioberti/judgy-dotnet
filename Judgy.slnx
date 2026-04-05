@@ -1,2 +1,5 @@
 <Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Judgy.Core/Judgy.Core.csproj" />
+  </Folder>
 </Solution>
