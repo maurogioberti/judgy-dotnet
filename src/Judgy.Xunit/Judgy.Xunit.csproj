@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>Judgy.Xunit</PackageId>
+    <Description>xUnit assertions for semantic testing with Judgy.</Description>
+    <RootNamespace>Judgy</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3.assert.source" Version="3.*" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Judgy.Core\Judgy.Core.csproj" />
+  </ItemGroup>
+
+</Project>

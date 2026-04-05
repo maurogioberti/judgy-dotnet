@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Judgy.Core/Judgy.Core.csproj" />
+    <Project Path="src/Judgy.Xunit/Judgy.Xunit.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Judgy.Core.Tests/Judgy.Core.Tests.csproj" />
