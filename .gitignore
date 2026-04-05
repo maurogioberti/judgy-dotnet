@@ -27,6 +27,7 @@ publish/
 **/[Pp]ackages/*
 !**/[Pp]ackages/build/
 *.nupkg
+*.snupkg
 **/packages/repositories.config
 .nuget/
 project.lock.json
@@ -61,4 +62,5 @@ Desktop.ini
 *.tmp
 
 ## Project-specific
+artifacts/
 BenchmarkDotNet.Artifacts/
