@@ -12,6 +12,9 @@
     <Project Path="src/Judgy.Providers.OpenAI/Judgy.Providers.OpenAI.csproj" />
     <Project Path="src/Judgy.Xunit/Judgy.Xunit.csproj" />
   </Folder>
+  <Folder Name="/samples/">
+    <Project Path="samples/Judgy.Samples.SemanticEvaluation/Judgy.Samples.SemanticEvaluation.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Judgy.Providers.Anthropic.Tests/Judgy.Providers.Anthropic.Tests.csproj" />
     <Project Path="tests/Judgy.Providers.AzureOpenAI.Tests/Judgy.Providers.AzureOpenAI.Tests.csproj" />
