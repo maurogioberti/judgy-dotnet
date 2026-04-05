@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageId>Judgy.Providers.Ollama</PackageId>
+    <Description>Ollama provider for Judgy.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Judgy.Core\Judgy.Core.csproj" />
+  </ItemGroup>
+
+</Project>
