@@ -4,4 +4,13 @@
     <Description>Core evaluation and assertion primitives for Judgy.</Description>
     <RootNamespace>Judgy</RootNamespace>
   </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Prompts\SemanticEvaluation.system.md">
+      <LogicalName>Judgy.Prompts.SemanticEvaluation.system.md</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Prompts\SemanticEvaluation.user.md">
+      <LogicalName>Judgy.Prompts.SemanticEvaluation.user.md</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
 </Project>
