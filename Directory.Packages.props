@@ -1,10 +1,15 @@
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <JudgyPackageVersion>0.1.1</JudgyPackageVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageVersion Include="FluentAssertions" Version="8.9.0" />
+    <PackageVersion Include="Judgy.Core" Version="$(JudgyPackageVersion)" />
+    <PackageVersion Include="Judgy.Providers.Http" Version="$(JudgyPackageVersion)" />
+    <PackageVersion Include="Judgy.Providers.Ollama" Version="$(JudgyPackageVersion)" />
+    <PackageVersion Include="Judgy.Xunit" Version="$(JudgyPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />

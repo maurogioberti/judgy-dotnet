@@ -7,7 +7,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     environment:
       name: nuget-org
 
@@ -19,6 +19,18 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           global-json-file: global.json
+
+      - name: Determine release version
+        id: version
+        run: |
+          version=$(grep -oPm1 '(?<=<Version>)[^<]+' Directory.Build.props)
+          if [ -z "$version" ]; then
+            echo "Could not determine package version from Directory.Build.props"
+            exit 1
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
 
       - name: Restore
         run: dotnet restore Judgy.slnx
@@ -49,6 +61,17 @@ jobs:
             --source "https://api.nuget.org/v3/index.json" \
             --api-key "$NUGET_ORG_API_KEY" \
             --skip-duplicate
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.version.outputs.tag }}" \
+            artifacts/packages/*.nupkg \
+            artifacts/packages/*.snupkg \
+            --target "$GITHUB_SHA" \
+            --title "${{ steps.version.outputs.tag }}" \
+            --generate-notes
 
       - name: Upload packages
         uses: actions/upload-artifact@v6
