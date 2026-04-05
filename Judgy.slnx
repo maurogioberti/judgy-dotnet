@@ -14,6 +14,7 @@
   </Folder>
   <Folder Name="/samples/">
     <Project Path="samples/Judgy.Samples.SemanticEvaluation/Judgy.Samples.SemanticEvaluation.csproj" />
+    <Project Path="samples/Judgy.Samples.XunitAssertions/Judgy.Samples.XunitAssertions.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Judgy.Providers.Anthropic.Tests/Judgy.Providers.Anthropic.Tests.csproj" />
