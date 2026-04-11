@@ -1,4 +1,4 @@
-<Solution>
+﻿<Solution>
   <Folder Name="/src/">
     <Project Path="src/Judgy.Providers.Anthropic/Judgy.Providers.Anthropic.csproj" />
     <Project Path="src/Judgy.Core/Judgy.Core.csproj" />
@@ -24,5 +24,9 @@
     <Project Path="tests/Judgy.Providers.Ollama.Tests/Judgy.Providers.Ollama.Tests.csproj" />
     <Project Path="tests/Judgy.Providers.OpenAI.Tests/Judgy.Providers.OpenAI.Tests.csproj" />
     <Project Path="tests/Judgy.Xunit.Tests/Judgy.Xunit.Tests.csproj" />
+  </Folder>
+  <Folder Name="/samples/">
+    <Project Path="samples/Judgy.Samples.SemanticEvaluation/Judgy.Samples.SemanticEvaluation.csproj" />
+    <Project Path="samples/Judgy.Samples.XunitAssertions/Judgy.Samples.XunitAssertions.csproj" />
   </Folder>
 </Solution>
